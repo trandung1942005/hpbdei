@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mưa Sao Băng Sinh Nhật</title>
+  <style>
+    body{
+      margin:0;
+      height:100vh;
+      background:#000010;
+      overflow:hidden;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:100%;
+      position:fixed;
+      top:0;left:0;
+      z-index:0;
+    }
+    #musicBtn{
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: 0.3s;
+      z-index: 10;
+    }
+    #musicBtn:hover{ background: #ffd700; }
+    #controlPanel{
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 200px;
+      z-index: 10;
+    }
+    #controlPanel label{display:block;margin-top:10px;}
+    #controlPanel input[type=range]{ width: 100%; }
+
+    /* Countdown + Greeting */
+    #countdown, #greeting, #cakeBox, #candleBox, #letterBox{
+      position: fixed;
+      top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      text-align: center;
+      z-index: 5;
+    }
+    #countdown{
+      font-size: 120px;
+      font-weight: bold;
+      display: none;
+      color: #fff;
+      text-shadow:
+          0 0 10px #fff,
+          0 0 20px #ff0,
+          0 0 40px #f0f,
+          0 0 60px #0ff,
+          0 0 80px #ff0;
+      animation: glowNumber 1.5s infinite alternate;
+      filter: blur(0.5px);
+    }
+    @keyframes glowNumber {
+      from { text-shadow:0 0 10px #fff,0 0 20px #ff0,0 0 40px #f0f; }
+      to   { text-shadow:0 0 20px #fff,0 0 40px #ff0,0 0 80px #0ff,0 0 100px #f0f; }
+    }
+    #greeting{
+      font-size: 60px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 0 20px #fff, 0 0 40px #ff00ff;
+      display: none;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    /* Cake */
+    #cakeBox {
+      display: none;
+      font-size: 280px; /* bánh to hơn */
+      cursor: pointer;
+    }
+    #cake { display:block; }
+
+    /* Candle */
+    #candleBox {
+      display: none;
+      position: relative;
+      width: 60px;
+      height: 160px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #fff;
+    }
+    #flame {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #ff0, #f90, #f00);
+      border-radius: 50%;
+      animation: flicker 0.3s infinite alternate;
+      box-shadow: 0 0 30px #ff0;
+    }
+    @keyframes flicker {
+      from { transform: translateX(-50%) scale(1); opacity: 0.8; }
+      to   { transform: translateX(-50%) scale(1.2); opacity: 1; }
+    }
+
+    /* Letter + Image */
+    #letterBox{
+      display: none;
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      border-radius: 12px;
+      color: #000;
+      width: 70%;
+      max-width: 900px;
+      box-shadow: 0 0 20px #fff;
+    }
+    #letterFlex{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+    #letterContent{
+      flex:1;
+      text-align:left;
+      font-size:18px;
+    }
+    #letterContent h2{
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #ff1493;
+      text-shadow: 0 0 8px #fff, 0 0 12px #ff69b4;
+    }
+    #letterBox img{
+      width:250px;
+      height:250px;
+      object-fit:cover;
+      border-radius:12px;
+      box-shadow:0 0 15px #ff69b4;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <!-- Nhạc Happy Birthday -->
+  <audio id="bgMusic" autoplay loop>
+    <source src="happy-birthday.mp3" type="audio/mpeg">
+  </audio>
+  <button id="musicBtn">Tắt nhạc</button>
+
+  <!-- Bảng điều chỉnh -->
+  <div id="controlPanel">
+    <label>Số sao băng: <span id="starCountVal">200</span>
+      <input type="range" id="starCount" min="50" max="500" value="200">
+    </label>
+    <label>Tốc độ tối đa: <span id="maxSpeedVal">16</span>
+      <input type="range" id="maxSpeed" min="2" max="50" value="16">
+    </label>
+    <label>Độ dài tối đa: <span id="maxLenVal">80</span>
+      <input type="range" id="maxLen" min="10" max="200" value="80">
+    </label>
+    <label>Màu sắc:
+      <select id="colorMode">
+        <option value="multi">Nhiều màu</option>
+        <option value="white">Trắng</option>
+        <option value="yellow">Vàng</option>
+        <option value="red">Đỏ</option>
+        <option value="blue">Xanh dương</option>
+        <option value="green">Xanh lá</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- Countdown + Greeting + Cake + Candle + Letter -->
+  <div id="countdown">5</div>
+  <div id="greeting">Chúc Mừng Sinh Nhật Em BÉ IU UwU!</div>
+
+  <div id="cakeBox">
+    <div id="cake">🎂</div>
+  </div>
+
+  <div id="candleBox">
+    <div id="flame"></div>
+  </div>
+
+  <div id="letterBox">
+    <div id="letterFlex">
+      <img src="your-image.jpg" alt="Người được chúc mừng">
+      <div id="letterContent">
+        <h2>Lời chúc</h2>
+        <p>Chúc em bé iu tuổi mới vui tươi hơn, hạnh phúc hơn, và ngày càng Xinh đẹp hơn nữa...nữa 🎉🎁.<br>
+        Và anh mong gần những điều luôn tốt đẹp và luôn ấm áp sẽ luôn đến với em bé nhoa🌟.</p>
+                                                                           Kí tên</p>
+                                                                        Anh Iu của EM</p>             
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ====== Sao băng ====== */
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let w,h;
+    function resize(){ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; }
+    window.addEventListener("resize",resize); resize();
+    let starCount = 200, maxSpeed = 16, maxLen = 80, colorMode = "multi";
+    function getColor(){
+      if(colorMode==="white") return "#ffffff";
+      if(colorMode==="yellow") return "#ffff00";
+      if(colorMode==="red") return "#ff0000";
+      if(colorMode==="blue") return "#00bfff";
+      if(colorMode==="green") return "#00ff00";
+      const colors = ["#ff69b4","#00ffff","#ffff00","#ff0000","#00ff00","#ff8c00","#00bfff","#ffffff"];
+      return colors[Math.floor(Math.random()*colors.length)];
+    }
+    class Star{
+      constructor(){ this.reset(); }
+      reset(){
+        if(Math.random()<0.5){ this.x=Math.random()*w; this.y=-10; }
+        else{ this.x=-10; this.y=Math.random()*h; }
+        this.angle=Math.PI/4;
+        this.len=Math.random()*maxLen+10;
+        this.speed=Math.random()*maxSpeed/2+6;
+        this.opacity=1; this.color=getColor();
+      }
+      draw(){
+        ctx.save(); ctx.globalAlpha=this.opacity; ctx.strokeStyle=this.color; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(this.x,this.y);
+        ctx.lineTo(this.x - this.len*Math.cos(this.angle), this.y - this.len*Math.sin(this.angle));
+        ctx.stroke(); ctx.restore();
+      }
+      update(){
+        this.x+=this.speed*Math.cos(this.angle);
+        this.y+=this.speed*Math.sin(this.angle);
+        this.opacity-=0.005;
+        if(this.x<-50||this.x>w+50||this.y<-50||this.y>h+50||this.opacity<=0){ this.reset(); }
+      }
+    }
+    let stars=[]; 
+    function createStars(n){ stars=[]; for(let i=0;i<n;i++) stars.push(new Star()); }
+    createStars(starCount);
+    function animate(){
+      ctx.fillStyle="rgba(0,0,16,0.3)";
+      ctx.fillRect(0,0,w,h);
+      stars.forEach(s=>{s.update();s.draw();});
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    /* ====== Nhạc ====== */
+    const music=document.getElementById("bgMusic"), musicBtn=document.getElementById("musicBtn"); 
+    let playing=true;
+    musicBtn.onclick=()=>{
+      if(playing){music.pause(); musicBtn.textContent="Bật nhạc";}
+      else{music.play().catch(()=>{}); musicBtn.textContent="Tắt nhạc";}
+      playing=!playing;
+    };
+
+    /* ====== Điều khiển ====== */
+    document.getElementById("starCount").oninput=e=>{
+      starCount=parseInt(e.target.value);
+      document.getElementById("starCountVal").textContent=starCount;
+      createStars(starCount);
+    };
+    document.getElementById("maxSpeed").oninput=e=>{
+      maxSpeed=parseInt(e.target.value);
+      document.getElementById("maxSpeedVal").textContent=maxSpeed;
+      createStars(starCount);
+    };
+    document.getElementById("maxLen").oninput=e=>{
+      maxLen=parseInt(e.target.value);
+      document.getElementById("maxLenVal").textContent=maxLen;
+      createStars(starCount);
+    };
+    document.getElementById("colorMode").onchange=e=>{
+      colorMode=e.target.value; createStars(starCount);
+    };
+
+    /* ====== Trình tự ====== */
+    const countdown=document.getElementById("countdown");
+    const greeting=document.getElementById("greeting");
+    const cakeBox=document.getElementById("cakeBox");
+    const candleBox=document.getElementById("candleBox");
+    const letterBox=document.getElementById("letterBox");
+
+    let time = 5;
+    countdown.style.display = "block";
+
+    const timer = setInterval(() => {
+      countdown.textContent = time;
+      if (time <= 0) {
+        clearInterval(timer);
+        countdown.style.display = "none";
+        setTimeout(() => {
+          greeting.style.display = "block";
+          setTimeout(() => {
+            greeting.style.display = "none";
+            cakeBox.style.display = "block";
+          }, 3000);
+        }, 1500);
+      }
+      time--;
+    }, 1000);
+
+    cakeBox.onclick = () => {
+      cakeBox.style.display = "none"; // ẩn bánh
+      candleBox.style.display = "block"; // hiện nến
+      setTimeout(() => {
+        candleBox.style.display = "none"; // ẩn nến
+        letterBox.style.display = "block"; // hiện thiệp
+      }, 3000);
+    };
+  </script>
+</body>
+</html>
